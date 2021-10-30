@@ -1,0 +1,44 @@
+{
+  "id": "2237111",
+  "name": "myFont",
+  "font_family": "iconfont",
+  "css_prefix_text": "el-icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "521969",
+      "name": "学院",
+      "font_class": "xueyuan1",
+      "unicode": "e62e",
+      "unicode_decimal": 58926
+    },
+    {
+      "icon_id": "6561873",
+      "name": "学院",
+      "font_class": "xueyuan",
+      "unicode": "e624",
+      "unicode_decimal": 58916
+    },
+    {
+      "icon_id": "4396699",
+      "name": "停车场",
+      "font_class": "tingchechang1",
+      "unicode": "e64c",
+      "unicode_decimal": 58956
+    },
+    {
+      "icon_id": "494043",
+      "name": "停车场",
+      "font_class": "tingchechang",
+      "unicode": "e615",
+      "unicode_decimal": 58901
+    },
+    {
+      "icon_id": "18517121",
+      "name": "系统",
+      "font_class": "0-30",
+      "unicode": "e601",
+      "unicode_decimal": 58881
+    }
+  ]
+}
