@@ -1,11 +1,10 @@
 const path = require('path')
-const resolve = function(dir) {
+const resolve = function (dir) {
   return path.join(__dirname, dir)
 }
 
 module.exports = {
-  publicPath:
-    process.env.NODE_ENV === 'production' ? '/vue-admin-webapp/' : '/',
+  publicPath: process.env.NODE_ENV === 'production' ? '/vue-admin-webapp/' : '/',
   outputDir: 'dist',
   assetsDir: 'static',
   lintOnSave: true, // 是否开启eslint保存检测
@@ -15,6 +14,7 @@ module.exports = {
       .set('@', resolve('src'))
       .set('views', resolve('src/views'))
     config.optimization.runtimeChunk('single')
+    config.resolve.symlinks(false)
   },
   devServer: {
     host: 'localhost',

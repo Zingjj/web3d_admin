@@ -11,34 +11,8 @@
           class="width1"
           v-model="sch_order"
         ></el-input>
-        <el-select
-          v-model="sch_status"
-          clearable
-          class="width1"
-          placeholde="请选择状态"
-        >
-          <el-option
-            v-for="item in options"
-            :label="item.label"
-            :value="item.value"
-            :key="item.value"
-          ></el-option>
-        </el-select>
-        <el-date-picker
-          class="width1"
-          v-model="sch_date"
-          type="date"
-          placeholder="选择日期时间"
-          value-format="yyyy-MM-dd"
-        ></el-date-picker>
-        <el-button type="primary" icon="el-icon-search" @click="searchTab()"
+        <el-button type="primary" icon="el-icon-search" @click="searchCampus"
           >搜索</el-button
-        >
-        <el-button
-          type="primary"
-          icon="el-icon-circle-plus-outline"
-          @click="addTab"
-          >添加</el-button
         >
       </div>
       <el-table :data="tableData" border stripe>
@@ -169,7 +143,7 @@
 </template>
 
 <script>
-import { getPageTab2 } from '@/api/table'
+import { getCampusList } from '@/api/campusData';
 export default {
   data() {
     return {
@@ -213,164 +187,169 @@ export default {
     }
   },
   created() {
-    this._getPageTab2()
+    this._getCampusList();
   },
   filters: {
     statusText(val) {
-      if (val === undefined) return
+      if (val === undefined) return;
       if (val === 0) {
-        return '已完成'
+        return '已完成';
       } else if (val === 1) {
-        return '待审核'
+        return '待审核';
       } else if (val === 2) {
-        return '配送中'
+        return '配送中';
       } else {
-        return '已取消'
+        return '已取消';
       }
     },
     tagClass(val) {
-      if (val === undefined) return
+      if (val === undefined) return;
       if (val === 0) {
-        return 'success'
+        return 'success';
       } else if (val === 1) {
-        return 'info'
+        return 'info';
       } else if (val === 2) {
-        return 'warning'
+        return 'warning';
       } else {
-        return 'danger'
+        return 'danger';
       }
     }
   },
   methods: {
     handleSize(val) {
-      this.pageSize = val
-      this.getPageData()
+      this.pageSize = val;
+      this.getPageData();
     },
     handlePage(val) {
-      this.currentPage = val
-      this.getPageData()
+      this.currentPage = val;
+      this.getPageData();
     },
-    _getPageTab2() {
-      getPageTab2()
+    _getCampusList() {
+      getCampusList()
         .then(res => {
-          this.allList = res.data.tableList
-          this.schArr = this.allList
-          this.getPageData()
-          this.total = res.data.total
+          // this.allList = res.data.tableList
+          // this.schArr = this.allList
+          // this.getPageData()
+          // this.total = res.data.total
+          console.log('页面中的数据', res);
         })
         .catch(error => {
-          this.$message.error(error.message)
-        })
+          this.$message.error(error.message);
+        });
     },
     getPageData() {
-      let start = (this.currentPage - 1) * this.pageSize
-      let end = start + this.pageSize
-      this.tableData = this.schArr.slice(start, end)
+      let start = (this.currentPage - 1) * this.pageSize;
+      let end = start + this.pageSize;
+      this.tableData = this.schArr.slice(start, end);
     },
     // 查找
-    searchTab() {
-      let arrList = []
-      for (let item of this.allList) {
-        if (
-          this.sch_order.trim() === '' &&
-          this.sch_status === null &&
-          this.sch_date === null
-        ) {
-          arrList = this.allList
-          break
-        } else if (
-          item.order.startsWith(this.sch_order) &&
-          (this.sch_status !== null ? item.status === this.sch_status : true) &&
-          (this.sch_date !== null ? item.time.startsWith(this.sch_date) : true)
-        ) {
-          let obj = Object.assign({}, item)
-          arrList.push(obj)
-        }
-      }
-      this.schArr = arrList
-      this.total = arrList.length
-      this.currentPage = 1
-      this.pageSize = 10
-      this.getPageData()
-    },
+    // searchTab() {
+    //   let arrList = []
+    //   for (let item of this.allList) {
+    //     if (
+    //       this.sch_order.trim() === '' &&
+    //       this.sch_status === null &&
+    //       this.sch_date === null
+    //     ) {
+    //       arrList = this.allList
+    //       break
+    //     } else if (
+    //       item.order.startsWith(this.sch_order) &&
+    //       (this.sch_status !== null ? item.status === this.sch_status : true) &&
+    //       (this.sch_date !== null ? item.time.startsWith(this.sch_date) : true)
+    //     ) {
+    //       let obj = Object.assign({}, item)
+    //       arrList.push(obj)
+    //     }
+    //   }
+    //   this.schArr = arrList
+    //   this.total = arrList.length
+    //   this.currentPage = 1
+    //   this.pageSize = 10
+    //   this.getPageData()
+    // },
+    /**
+     * 查找
+     */
+    searchCampus() {},
     // add
     addTab() {
-      this.formData = {}
-      this.diaIsShow = true
-      this.formData.order = (Math.random() * 10e18).toString()
-      this.formData.id = this.allList.length + 1
-      this.editType = 'add'
+      this.formData = {};
+      this.diaIsShow = true;
+      this.formData.order = (Math.random() * 10e18).toString();
+      this.formData.id = this.allList.length + 1;
+      this.editType = 'add';
       this.$nextTick(() => {
         this.$refs.diaForm.clearValidate()
-      })
+      });
     },
     // 审核
     toConfirm(row) {
-      row.status = 2
+      row.status = 2;
       this.$notify({
         title: '成功',
         message: '审核提交成功',
         type: 'success'
-      })
+      });
     },
     // 完成
     toSuccess(row) {
-      row.status = 0
+      row.status = 0;
       this.$notify({
         title: '成功',
         message: '该订单已完成配送',
         type: 'success'
-      })
+      });
     },
     // 取消
     toDelete(row) {
-      row.status = 3
+      row.status = 3;
       this.$notify({
         title: '成功',
         message: '已取消该订单',
         type: 'success'
-      })
+      });
     },
     // 编辑
     editTable(index, row) {
-      this.formData = Object.assign({}, row)
-      this.editType = 'update'
-      this.diaIsShow = true
+      this.formData = Object.assign({}, row);
+      this.editType = 'update';
+      this.diaIsShow = true;
       this.$nextTick(() => {
-        this.$refs.diaForm.clearValidate()
-      })
-      this.rowIndex = index
+        this.$refs.diaForm.clearValidate();
+      });
+      this.rowIndex = index;
     },
     changeTab(form, type) {
       this.$refs[form].validate(valid => {
         if (valid) {
           if (type === 'update') {
             // 改变整个表格数据
-            let start = (this.currentPage - 1) * this.pageSize
+            let start = (this.currentPage - 1) * this.pageSize;
             this.allList[start + this.rowIndex] = Object.assign(
               {},
               this.formData
-            )
+            );
             // 解决数组不能通过索引响应数据变化
             this.$set(
               this.tableData,
               this.rowIndex,
               Object.assign({}, this.formData)
-            )
+            );
             this.$notify({
               title: '成功',
               message: '订单已修改成功',
               type: 'success'
-            })
+            });
           } else {
-            this.tableData.unshift(Object.assign({}, this.formData))
-            this.allList.push(Object.assign({}, this.formData))
+            this.tableData.unshift(Object.assign({}, this.formData));
+            this.allList.push(Object.assign({}, this.formData));
           }
-          this.diaIsShow = false
+          this.diaIsShow = false;
         } else {
-          return
+          return;
         }
-      })
+      });
     }
   }
 }

@@ -66,6 +66,7 @@ const actions = {
       getInfo()
         .then(res => {
           if (res.code === 0) {
+            console.log(res.data);
             const { name, roles, introduce } = res.data
             commit('SET_ROLES', roles)
             commit('SET_NAME', name)

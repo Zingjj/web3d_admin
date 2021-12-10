@@ -10,8 +10,8 @@ module.exports = {
     'prettier/prettier': [
       'error',
       {
-        semi: false,
-        singleQuote: true
+        semi: true, // 语句结尾强制添加分号
+        singleQuote: true // 强制使用单引号
       }
     ]
   },
