@@ -2,7 +2,7 @@
   <div class="className">
     <el-card class="anoCard">
       <div slot="header">
-        <span>复杂操作表格</span>
+        <span>校区数据管理</span>
       </div>
       <div class="searchDiv">
         <el-input
@@ -16,51 +16,46 @@
         >
       </div>
       <el-table :data="tableData" border stripe>
-        <el-table-column prop="id" label="序号" width="60"></el-table-column>
-        <el-table-column prop="order" label="订单号"></el-table-column>
-        <el-table-column prop="time" label="下单时间"></el-table-column>
         <el-table-column
-          prop="address"
-          label="配送地址"
-          width="210"
+          prop="campusId"
+          label="id"
+          width="50"
         ></el-table-column>
-        <el-table-column prop="phone" label="联系电话"></el-table-column>
-        <el-table-column
-          prop="name"
-          label="配送员"
-          width="70"
-        ></el-table-column>
-        <el-table-column prop="status" label="状态" width="90">
+        <el-table-column width="100" prop="campusName" label="校区名称"></el-table-column>
+        <el-table-column width="100" prop="campusShortName" label="简称">
           <template slot-scope="scope">
-            <el-tag :type="scope.row.status | tagClass">{{
-              scope.row.status | statusText
+            {{ scope.row.campusShortName | campusShortNameText }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="city"
+          label="所在城市"
+          width="100"
+        ></el-table-column>
+        <el-table-column width="150" prop="createTime" label="创建时间"></el-table-column>
+        <el-table-column prop="describe" label="详细描述" show-overflow-tooltip width="90">
+        </el-table-column>
+        <el-table-column prop="shortDes" label="简略描述" show-overflow-tooltip width="90">
+        </el-table-column>
+        <el-table-column
+          prop="data"
+          label="校区数据"
+          min-width="100"
+          show-overflow-tooltip
+        ></el-table-column>
+        <el-table-column prop="state" label="状态" width="70">
+          <template slot-scope="scope">
+            <el-tag :type="scope.row.state | tagClass">{{
+              scope.row.state | stateText
             }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="300">
+        <el-table-column label="操作" width="85">
           <template slot-scope="scope">
             <el-button
               type="primary"
               @click="editTable(scope.$index, scope.row)"
-              >编辑</el-button
-            >
-            <el-button
-              type="warning"
-              @click="toConfirm(scope.row)"
-              :disabled="scope.row.status === 1 ? false : true"
-              >审核</el-button
-            >
-            <el-button
-              type="success"
-              @click="toSuccess(scope.row)"
-              :disabled="scope.row.status === 2 ? false : true"
-              >完成</el-button
-            >
-            <el-button
-              type="danger"
-              @click="toDelete(scope.row)"
-              :disabled="scope.row.status !== 3 ? false : true"
-              >取消</el-button
+              >修改</el-button
             >
           </template>
         </el-table-column>
@@ -143,14 +138,14 @@
 </template>
 
 <script>
-import { getCampusList } from '@/api/campusData';
+import { getCampusList } from "@/api/campusData";
 export default {
   data() {
     return {
       tableData: [],
       allList: [],
       schArr: [],
-      sch_order: '',
+      sch_order: "",
       sch_status: null,
       sch_date: null,
       currentPage: 1,
@@ -159,12 +154,10 @@ export default {
       pageSizes: [10, 20, 30, 40],
       diaIsShow: false,
       formData: {},
-      editType: '',
+      editType: "",
       options: [
-        { label: '待审核', value: 1 },
-        { label: '配送中', value: 2 },
-        { label: '已完成', value: 0 },
-        { label: '已取消', value: 3 }
+        { label: "正常", value: 0 },
+        { label: "禁用", value: 1 }
       ],
       rowIndex: 0,
       rules: {
@@ -173,47 +166,42 @@ export default {
           {
             // type: 'datetime',
             required: true,
-            message: '请输入时间',
-            trigger: 'change'
-          }
+            message: "请输入时间",
+            trigger: "change",
+          },
         ],
-        address: [{ required: true, message: '请输入地址', trigger: 'blur' }],
-        phone: [{ required: true, message: '请输入联系方式', trigger: 'blur' }],
-        name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+        address: [{ required: true, message: "请输入地址", trigger: "blur" }],
+        phone: [{ required: true, message: "请输入联系方式", trigger: "blur" }],
+        name: [{ required: true, message: "请输入姓名", trigger: "blur" }],
         status: [
-          { required: true, message: '请选择订单状态', trigger: 'change' }
-        ]
-      }
-    }
+          { required: true, message: "请选择订单状态", trigger: "change" },
+        ],
+      },
+    };
   },
   created() {
     this._getCampusList();
   },
   filters: {
-    statusText(val) {
+    campusShortNameText(val) {
+      if (!val) return "-";
+    },
+    stateText(val) {
       if (val === undefined) return;
       if (val === 0) {
-        return '已完成';
+        return "正常";
       } else if (val === 1) {
-        return '待审核';
-      } else if (val === 2) {
-        return '配送中';
-      } else {
-        return '已取消';
+        return "禁用";
       }
     },
     tagClass(val) {
       if (val === undefined) return;
       if (val === 0) {
-        return 'success';
+        return "success";
       } else if (val === 1) {
-        return 'info';
-      } else if (val === 2) {
-        return 'warning';
-      } else {
-        return 'danger';
+        return "info";
       }
-    }
+    },
   },
   methods: {
     handleSize(val) {
@@ -226,14 +214,10 @@ export default {
     },
     _getCampusList() {
       getCampusList()
-        .then(res => {
-          // this.allList = res.data.tableList
-          // this.schArr = this.allList
-          // this.getPageData()
-          // this.total = res.data.total
-          console.log('页面中的数据', res);
+        .then((res) => {
+          this.tableData = res.data;
         })
-        .catch(error => {
+        .catch((error) => {
           this.$message.error(error.message);
         });
     },
@@ -278,42 +262,42 @@ export default {
       this.diaIsShow = true;
       this.formData.order = (Math.random() * 10e18).toString();
       this.formData.id = this.allList.length + 1;
-      this.editType = 'add';
+      this.editType = "add";
       this.$nextTick(() => {
-        this.$refs.diaForm.clearValidate()
+        this.$refs.diaForm.clearValidate();
       });
     },
     // 审核
     toConfirm(row) {
       row.status = 2;
       this.$notify({
-        title: '成功',
-        message: '审核提交成功',
-        type: 'success'
+        title: "成功",
+        message: "审核提交成功",
+        type: "success",
       });
     },
     // 完成
     toSuccess(row) {
       row.status = 0;
       this.$notify({
-        title: '成功',
-        message: '该订单已完成配送',
-        type: 'success'
+        title: "成功",
+        message: "该订单已完成配送",
+        type: "success",
       });
     },
     // 取消
     toDelete(row) {
       row.status = 3;
       this.$notify({
-        title: '成功',
-        message: '已取消该订单',
-        type: 'success'
+        title: "成功",
+        message: "已取消该订单",
+        type: "success",
       });
     },
     // 编辑
     editTable(index, row) {
       this.formData = Object.assign({}, row);
-      this.editType = 'update';
+      this.editType = "update";
       this.diaIsShow = true;
       this.$nextTick(() => {
         this.$refs.diaForm.clearValidate();
@@ -321,9 +305,9 @@ export default {
       this.rowIndex = index;
     },
     changeTab(form, type) {
-      this.$refs[form].validate(valid => {
+      this.$refs[form].validate((valid) => {
         if (valid) {
-          if (type === 'update') {
+          if (type === "update") {
             // 改变整个表格数据
             let start = (this.currentPage - 1) * this.pageSize;
             this.allList[start + this.rowIndex] = Object.assign(
@@ -337,9 +321,9 @@ export default {
               Object.assign({}, this.formData)
             );
             this.$notify({
-              title: '成功',
-              message: '订单已修改成功',
-              type: 'success'
+              title: "成功",
+              message: "订单已修改成功",
+              type: "success",
             });
           } else {
             this.tableData.unshift(Object.assign({}, this.formData));
@@ -351,8 +335,8 @@ export default {
         }
       });
     }
-  }
-}
+  },
+};
 </script>
 <style lang="scss" scoped>
 .fyDiv {
@@ -383,7 +367,7 @@ export default {
 <style lang="scss">
 .anoCard {
   .el-card__body:after {
-    content: '';
+    content: "";
     clear: both;
     width: 0;
     height: 0;
@@ -394,7 +378,10 @@ export default {
 .diaForm .el-form-item__label {
   padding-right: 20px;
 }
-.searchDiv [class^='el-icon'] {
+.searchDiv [class^="el-icon"] {
   color: #fff;
+}
+.el-tooltip__popper {
+  width: 400px;
 }
 </style>

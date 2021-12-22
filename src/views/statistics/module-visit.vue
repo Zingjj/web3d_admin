@@ -1,135 +1,72 @@
 <template>
   <div class="slideCharts">
     <div class="chartBox">
-      <div ref="myCharts" class="chartBox_d"></div>
+      <line-charts :chartData="chartData"></line-charts>
     </div>
   </div>
 </template>
 
 <script>
-import echarts from 'echarts'
-import resize from '@/mixins/resize'
-require('echarts/theme/macarons')
+import { MODULE_NAME } from '@/config/index.js';
+import { getModuleVisitCnt } from '@/api/dashboard.js';
+import LineCharts from '@/components/Charts/line-charts.vue';
 export default {
-  mixins: [resize],
+  components: {
+    LineCharts,
+  },
   data() {
     return {
-      mycharts: null,
       chartData: {
-        date: [],
-        price: []
-      }
+        title: "",
+        seriesName: "",
+        xData: [],
+        yData: [],
+      },
     }
   },
-  mounted() {
-    this.mockData()
-    this.$nextTick().then(() => {
-      this.initEcharts()
-    })
+  created() {
+    this._getModuleVisitCnt();
   },
   methods: {
-    // mock data
-    mockData() {
-      let base = +new Date('2018/1/1')
-      let oneDay = 24 * 3600 * 1000
-      let date = []
-      let data = []
-      let len = Math.ceil((+new Date() - base) / oneDay)
-      for (let i = 0; i < len; i++) {
-        let item = new Date(base)
-        base += oneDay
-        date.push(
-          item.getFullYear() +
-            '/' +
-            (item.getMonth() + 1) +
-            '/' +
-            item.getDate()
-        )
-        data.push(Math.floor(Math.random() * (1000 - 500 + 1) + 500))
+    /**
+     * 初始化校区列表
+     */
+    initChartData(data) {
+      let mp = [],
+        moduleList = [],
+        cnt = [];
+      for (let key in data) {
+        let tmp = [];
+        tmp[0] = key;
+        tmp[1] = data[key];
+        mp.push(tmp);
       }
-      this.chartData.date = date
-      this.chartData.price = data
+      mp.sort((a, b) => b[1] - a[1]);
+
+      for (let kv of mp) {
+        moduleList.push(MODULE_NAME[kv[0]]);
+        cnt.push(kv[1]);
+      }
+      this.chartData = {
+        xData: Object.assign([], moduleList),
+        yData: Object.assign([], cnt),
+        title: '模块访问情况统计',
+        seriesName: '访问量'
+      };
     },
-    initEcharts() {
-      this.mycharts = echarts.init(this.$refs.myCharts, 'macarons')
-      this._setOption(this.chartData)
+
+    /**
+     * 获取全部数据
+     */
+    _getModuleVisitCnt(startT, endT) {
+      getModuleVisitCnt(startT, endT)
+        .then((res) => {
+          this.initChartData(res.data);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     },
-    _setOption(chartData) {
-      this.mycharts.setOption({
-        title: {
-          text: '商品价格变动图',
-          left: '16'
-        },
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'cross',
-            label: {
-              background: '#6a7985'
-            }
-          }
-        },
-        grid: {
-          left: '20',
-          right: '20',
-          bottom: '30',
-          containLabel: true
-        },
-        xAxis: [
-          {
-            type: 'category',
-            boundaryGap: false,
-            data: chartData.date
-          }
-        ],
-        yAxis: [
-          {
-            type: 'value',
-            boundaryGap: [0, '100%']
-          }
-        ],
-        dataZoom: [
-          {
-            type: 'inside',
-            start: 0,
-            end: 10
-          },
-          {
-            start: 0,
-            end: 10,
-            handleSize: '80%',
-            handleStyle: {
-              color: '#fff',
-              shadowBlur: 3,
-              shadowColor: 'rgba(0, 0, 0, 0.6)',
-              shadowOffsetX: 2,
-              shadowOffsetY: 2
-            },
-            bottom: 0
-          }
-        ],
-        series: [
-          {
-            name: '商品价格',
-            type: 'line',
-            areaStyle: {
-              color: '#55a8fd',
-              opacity: 0.3
-            },
-            itemStyle: {
-              color: '#55a8fd'
-            },
-            lineStyle: {
-              color: '#55a8fd'
-            },
-            smooth: true,
-            data: chartData.price,
-            animationDuration: 2800,
-            animationEasing: 'quadraticOut'
-          }
-        ]
-      })
-    }
   }
 }
 </script>

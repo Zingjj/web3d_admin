@@ -39,36 +39,34 @@
           >全部</el-button
         >
       </div>
-      <div ref="myCharts" class="chartBox_d"></div>
+      <!-- class="chartBox_d" -->
+      <!-- 此处放可视化图表 -->
+      <line-charts :chartData="chartData"></line-charts>
     </div>
   </div>
 </template>
 
 <script>
-import { getCampusVisitCnt } from "@/api/campusData.js";
+import { getCampusVisitCnt } from "@/api/dashboard.js";
 import { CAMPUS_NAME_CH } from "@/config/index.js";
-import echarts from "echarts";
-import resize from "@/mixins/resize";
-require("echarts/theme/macarons");
+import LineCharts from "@/components/Charts/line-charts.vue";
 export default {
-  mixins: [resize],
+  components: {
+    LineCharts,
+  },
   data() {
     return {
-      mycharts: null,
       shows: 4,
-      campus: [],
-      price: [],
       chartData: {
-        campus: [],
-        visitCnt: [],
+        title: "",
+        seriesName: "",
+        xData: [],
+        yData: [],
       },
     };
   },
-  mounted() {
+  created() {
     this._getCampusVisitCnt();
-    // this.$nextTick().then(() => {
-    //   this.initEcharts();
-    // });
   },
   methods: {
     /**
@@ -90,82 +88,24 @@ export default {
         campusList.push(CAMPUS_NAME_CH[kv[0]]);
         cnt.push(kv[1]);
       }
-      this.chartData.campus = Object.assign([], campusList);
-      this.chartData.visitCnt = Object.assign([], cnt);
+      this.chartData = {
+        xData: Object.assign([], campusList),
+        yData: Object.assign([], cnt),
+        title: "校区访问情况统计",
+        seriesName: "访问量",
+      };
     },
     _getCampusVisitCnt() {
       getCampusVisitCnt()
         .then((res) => {
           this.initChartData(res.data);
-          this.initEcharts();
         })
         .catch((err) => {
           console.log(err);
         });
     },
     setChartData(type) {
-      this._setOption(this.chartData);
-    },
-    initEcharts() {
-      this.mycharts = echarts.init(this.$refs.myCharts, "macarons");
-      this.setChartData("all");
-    },
-    _setOption(chartData) {
-      console.log(chartData);
-      this.mycharts.setOption({
-        title: {
-          text: "校区点击情况柱状图",
-          left: "16",
-        },
-        tooltip: {
-          trigger: "axis",
-          axisPointer: {
-            type: "cross",
-            label: {
-              background: "#6a7985",
-            },
-          },
-        },
-        grid: {
-          left: "20",
-          right: "20",
-          bottom: "3",
-          containLabel: true,
-        },
-        xAxis: [
-          {
-            type: "category",
-            boundaryGap: false,
-            data: chartData.campus,
-          },
-        ],
-        yAxis: [
-          {
-            type: "value",
-            boundaryGap: [0, "100%"],
-          },
-        ],
-        series: [
-          {
-            name: "访问量",
-            type: "line",
-            areaStyle: {
-              color: "#55a8fd",
-              opacity: 0.3,
-            },
-            itemStyle: {
-              color: "#55a8fd",
-            },
-            lineStyle: {
-              color: "#55a8fd",
-            },
-            smooth: false,
-            data: chartData.visitCnt,
-            animationDuration: 2800,
-            animationEasing: "quadraticOut",
-          },
-        ],
-      });
+      // this._setOption(this.chartData);
     },
   },
 };
@@ -179,11 +119,6 @@ export default {
   background: #fff;
   height: 100%;
   position: relative;
-  .chartBox_d {
-    height: 100%;
-    box-sizing: border-box;
-    padding: 30px 20px 30px 20px;
-  }
   .btns {
     position: absolute;
     right: 40px;

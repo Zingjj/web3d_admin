@@ -9,6 +9,20 @@ const CAMPUS_NAME_CH = {
   8: '威海校区',
   9: '龙山校区'
 };
+const MODULE_NAME = {
+  1: '主要建筑',
+  2: '行政单位',
+  3: '公共服务',
+  4: '停车场',
+  5: '720全景',
+  6: '校内导航',
+  7: '交通出行',
+  8: '校区分布',
+  9: '使用帮助'
+}
+const API_URL = "http://202.194.14.238:8082";
 export {
-  CAMPUS_NAME_CH
+  CAMPUS_NAME_CH,
+  MODULE_NAME,
+  API_URL
 };
