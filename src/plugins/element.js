@@ -6,6 +6,7 @@ import {
   Form,
   FormItem,
   Input,
+  InputNumber,
   Image,
   Select,
   Option,
@@ -28,10 +29,12 @@ import {
   Tag,
   Tabs,
   TabPane,
-  Timeline,
-  TimelineItem,
+  // Timeline,
+  // TimelineItem,
   Card,
   Pagination,
+  Popover,
+  Popconfirm,
   Notification,
   Dialog,
   DatePicker,
@@ -56,6 +59,7 @@ Vue.use(Col);
 Vue.use(Form);
 Vue.use(FormItem);
 Vue.use(Input);
+Vue.use(InputNumber);
 Vue.use(Image);
 Vue.use(Message);
 Vue.use(MessageBox);
@@ -77,10 +81,12 @@ Vue.use(TableColumn);
 Vue.use(Tag);
 Vue.use(Tabs);
 Vue.use(TabPane);
-Vue.use(Timeline);
-Vue.use(TimelineItem);
+// Vue.use(Timeline);
+// Vue.use(TimelineItem);
 Vue.use(Card);
+Vue.use(Popover);
 Vue.use(Pagination);
+Vue.use(Popconfirm);
 Vue.use(Dialog);
 Vue.use(DatePicker);
 Vue.use(Select);

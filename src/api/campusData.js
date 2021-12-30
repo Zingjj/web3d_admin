@@ -1,6 +1,6 @@
 import { web3dSdk } from '../main';
-function getCampusList() {
-  return web3dSdk.getCampusList();
+function getCampusList(campusId, pageIndex, pageSize, key) {
+  return web3dSdk.getCampusList(campusId, pageIndex, pageSize, key);
 }
 
 export {

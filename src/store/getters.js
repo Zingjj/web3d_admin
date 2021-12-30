@@ -13,6 +13,7 @@ const getters = {
     }
   },
   msgIsShow: state => state.app.msgIsShow,
-  showDriver: state => state.app.showDriver
+  showDriver: state => state.app.showDriver,
+  campusSelectOptions: state => state.data.campusSelectOptions,
 }
 export default getters

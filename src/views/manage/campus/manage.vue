@@ -9,9 +9,12 @@
           type="text"
           placeholder="校区名称，校区简称关键字"
           class="width1"
-          v-model="sch_order"
+          v-model="searchKey"
         ></el-input>
-        <el-button type="primary" icon="el-icon-search" @click="searchCampus"
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          @click="_getCampusList()"
           >搜索</el-button
         >
       </div>
@@ -21,7 +24,11 @@
           label="id"
           width="50"
         ></el-table-column>
-        <el-table-column width="100" prop="campusName" label="校区名称"></el-table-column>
+        <el-table-column
+          width="100"
+          prop="campusName"
+          label="校区名称"
+        ></el-table-column>
         <el-table-column width="100" prop="campusShortName" label="简称">
           <template slot-scope="scope">
             {{ scope.row.campusShortName | campusShortNameText }}
@@ -32,10 +39,48 @@
           label="所在城市"
           width="100"
         ></el-table-column>
-        <el-table-column width="150" prop="createTime" label="创建时间"></el-table-column>
-        <el-table-column prop="describe" label="详细描述" show-overflow-tooltip width="90">
+        <!-- <el-table-column
+          width="150"
+          prop="createTime"
+          label="创建时间"
+        ></el-table-column> -->
+        <el-table-column
+          prop="describe"
+          label="校区描述"
+          show-overflow-tooltip
+          width="90"
+        >
         </el-table-column>
-        <el-table-column prop="shortDes" label="简略描述" show-overflow-tooltip width="90">
+        <el-table-column
+          prop="shortDes"
+          label="校区简介"
+          show-overflow-tooltip
+          width="90"
+        >
+        </el-table-column>
+        <el-table-column
+          prop="picUrl"
+          label="校区图片"
+          width="100"
+          align="center"
+        >
+          <template slot-scope="scope">
+            <el-image
+              style="height: 50px"
+              :src="scope.row.picUrl"
+              :preview-src-list="[scope.row.picUrl]"
+              fit="contain"
+              lazy
+            >
+            </el-image>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="webUrl"
+          label="校区官网"
+          show-overflow-tooltip
+          width="180"
+        >
         </el-table-column>
         <el-table-column
           prop="data"
@@ -73,58 +118,89 @@
       >
       </el-pagination>
     </el-card>
-    <el-dialog title="订单修改" :visible.sync="diaIsShow" class="diaForm">
+    <el-dialog
+      title="校区数据修改"
+      :visible.sync="diaIsShow"
+      width="480px"
+      class="diaForm"
+    >
       <el-form
         ref="diaForm"
         :model="formData"
-        :rules="rules"
-        label-width="140px"
+        label-width="115px"
       >
-        <el-form-item label="订单号">
-          <el-input
-            type="text"
-            v-model="formData.order"
-            :disabled="true"
-          ></el-input>
-        </el-form-item>
-        <el-form-item label="订单时间" prop="time">
-          <el-date-picker
-            v-model="formData.time"
-            type="datetime"
-            placeholder="选择日期时间"
-            value-format="yyyy-MM-dd HH:mm:ss"
-          ></el-date-picker>
-        </el-form-item>
-        <el-form-item label="配送地址" prop="address">
-          <el-input
-            type="text"
-            placeholder="请输入地址"
-            v-model="formData.address"
-          ></el-input>
-        </el-form-item>
-        <el-form-item label="联系电话" prop="phone">
-          <el-input
-            type="text"
-            placeholder="请输入电话"
-            v-model="formData.phone"
-          ></el-input>
-        </el-form-item>
-        <el-form-item label="配送员" prop="name">
-          <el-input
-            type="text"
-            placeholder="请输入姓名"
-            v-model="formData.name"
-          ></el-input>
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="formData.status" placeholde="请选择状态">
+        <el-form-item label="校区名称:">
+          <el-select
+            disabled
+            v-model="formData.campusId"
+            style="width: 300px; margin-bottom: 5px"
+          >
             <el-option
-              v-for="item in options"
-              :label="item.label"
-              :value="item.value"
-              :key="item.value"
+              v-for="item in campusListAll"
+              :key="item.id"
+              :label="'[' + item.id + ']' + item.campusName"
+              :value="item.id"
+              disabled
             ></el-option>
           </el-select>
+        </el-form-item>
+
+        <el-form-item label="所在城市:">
+          <el-input
+            v-model="formData.city"
+            style="width: 300px; margin-bottom: 5px"
+            clearable
+            disabled
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item label="校区简称:">
+          <el-input
+            v-model="formData.campusShortName"
+            style="width: 300px; margin-bottom: 5px"
+            clearable
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item label="校区描述:">
+          <el-input
+            v-model="formData.describe"
+            placeholder="校区描述"
+            style="width: 300px; margin-bottom: 5px"
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item label="校区简介:">
+          <el-input
+            v-model="formData.shortDes"
+            placeholder="校区简介"
+            style="width: 300px; margin-bottom: 5px"
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item label="校区数据:">
+          <el-input
+            v-model="formData.data"
+            placeholder="校区数据"
+            style="width: 300px; margin-bottom: 5px"
+          ></el-input>
+        </el-form-item>
+
+        <!-- 图片 -->
+        <el-form-item label="图片:">
+          <el-image
+            style="height: 50px; margin-right: 10px"
+            :src="imageUrl"
+            :preview-src-list="[imageUrl]"
+            fit="contain"
+          >
+          </el-image>
+          <input
+            type="file"
+            name="avatar"
+            ref="fileType"
+            @change="changeImage($event)"
+          />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="changeTab('diaForm', editType)"
@@ -139,44 +215,26 @@
 
 <script>
 import { getCampusList } from "@/api/campusData";
+import { API_URL } from "@/config/index.js";
 export default {
   data() {
     return {
       tableData: [],
-      allList: [],
-      schArr: [],
-      sch_order: "",
-      sch_status: null,
-      sch_date: null,
+      campusListAll: [],
+      searchKey: "",
       currentPage: 1,
-      pageSize: 10,
+      pageSize: 5,
       total: 0,
-      pageSizes: [10, 20, 30, 40],
+      pageSizes: [5, 10, 20],
       diaIsShow: false,
       formData: {},
       editType: "",
       options: [
         { label: "正常", value: 0 },
-        { label: "禁用", value: 1 }
+        { label: "禁用", value: 1 },
       ],
       rowIndex: 0,
-      rules: {
-        // order: [{ required: true, message: '请输入订单号', trigger: 'blur' }],
-        time: [
-          {
-            // type: 'datetime',
-            required: true,
-            message: "请输入时间",
-            trigger: "change",
-          },
-        ],
-        address: [{ required: true, message: "请输入地址", trigger: "blur" }],
-        phone: [{ required: true, message: "请输入联系方式", trigger: "blur" }],
-        name: [{ required: true, message: "请输入姓名", trigger: "blur" }],
-        status: [
-          { required: true, message: "请选择订单状态", trigger: "change" },
-        ],
-      },
+      imageUrl: "",
     };
   },
   created() {
@@ -185,6 +243,7 @@ export default {
   filters: {
     campusShortNameText(val) {
       if (!val) return "-";
+      return val;
     },
     stateText(val) {
       if (val === undefined) return;
@@ -206,56 +265,38 @@ export default {
   methods: {
     handleSize(val) {
       this.pageSize = val;
-      this.getPageData();
+      this._getCampusList();
     },
     handlePage(val) {
       this.currentPage = val;
-      this.getPageData();
+      this._getCampusList();
     },
-    _getCampusList() {
-      getCampusList()
-        .then((res) => {
-          this.tableData = res.data;
-        })
-        .catch((error) => {
-          this.$message.error(error.message);
-        });
-    },
-    getPageData() {
-      let start = (this.currentPage - 1) * this.pageSize;
-      let end = start + this.pageSize;
-      this.tableData = this.schArr.slice(start, end);
-    },
-    // 查找
-    // searchTab() {
-    //   let arrList = []
-    //   for (let item of this.allList) {
-    //     if (
-    //       this.sch_order.trim() === '' &&
-    //       this.sch_status === null &&
-    //       this.sch_date === null
-    //     ) {
-    //       arrList = this.allList
-    //       break
-    //     } else if (
-    //       item.order.startsWith(this.sch_order) &&
-    //       (this.sch_status !== null ? item.status === this.sch_status : true) &&
-    //       (this.sch_date !== null ? item.time.startsWith(this.sch_date) : true)
-    //     ) {
-    //       let obj = Object.assign({}, item)
-    //       arrList.push(obj)
-    //     }
-    //   }
-    //   this.schArr = arrList
-    //   this.total = arrList.length
-    //   this.currentPage = 1
-    //   this.pageSize = 10
-    //   this.getPageData()
-    // },
     /**
      * 查找
      */
-    searchCampus() {},
+    _getCampusList() {
+      let campusId = "";
+      this.tableData = [];
+      getCampusList(campusId, this.currentPage, this.pageSize, this.searchKey)
+        .then((res) => {
+          for (let item of res.data) {
+            let tmp = Object.assign({}, item);
+            tmp.picUrl = API_URL + tmp.picUrl;
+            this.tableData.push(tmp);
+          }
+          this.total = res.respPage.totalCount;
+          this.campusListAll = [];
+          for (let item of this.tableData) {
+            this.campusListAll.push({
+              id: item.campusId,
+              campusName: item.campusName,
+            });
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
     // add
     addTab() {
       this.formData = {};
@@ -296,6 +337,7 @@ export default {
     },
     // 编辑
     editTable(index, row) {
+      console.log(row);
       this.formData = Object.assign({}, row);
       this.editType = "update";
       this.diaIsShow = true;
@@ -303,6 +345,7 @@ export default {
         this.$refs.diaForm.clearValidate();
       });
       this.rowIndex = index;
+      this.imageUrl = this.formData.picUrl;
     },
     changeTab(form, type) {
       this.$refs[form].validate((valid) => {
@@ -334,7 +377,19 @@ export default {
           return;
         }
       });
-    }
+    },
+    changeImage(e) {
+      let file = e.target.files[0];
+      console.log(file);
+      let reader = new FileReader();
+      let that = this;
+      reader.readAsDataURL(file);
+      this.imageUrl = URL.createObjectURL(file);
+      reader.onload = function (e) {
+        //   that.avatar = this.result;
+        //   this.imageUrl = URL.createObjectURL(this.result);
+      };
+    },
   },
 };
 </script>
@@ -373,6 +428,12 @@ export default {
     height: 0;
     visibility: hidden;
     display: block;
+  }
+}
+.diaForm {
+  .el-input {
+    width: 300px;
+    margin-bottom: 5px;
   }
 }
 .diaForm .el-form-item__label {

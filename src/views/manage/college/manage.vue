@@ -10,12 +10,13 @@
           style="margin-right: 10px"
           v-model="campusId"
           placeholder="请选择校区"
+          @change="_getCollegeList"
         >
           <el-option
-            v-for="item in campusList"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
+            v-for="item in campusSelectOptions"
+            :key="item.id"
+            :label="item.campusName"
+            :value="item.id"
             :disabled="item.disabled"
           >
           </el-option>
@@ -26,8 +27,8 @@
           clearable
           v-model="collegeTypeId"
           placeholder="请选择"
-          @change="searchCollege"
-          @clear="searchCollege"
+          @change="_getCollegeList"
+          @clear="_getCollegeList"
         >
           <el-option
             v-for="item in collegeTypeList"
@@ -44,21 +45,21 @@
           clearable
           class="width1"
           v-model="searchKey"
-          @clear="searchCollege"
+          @clear="_getCollegeList"
         ></el-input>
         <div class="vertical-center">
           <el-button
             type="primary"
             size="medium"
             icon="el-icon-search"
-            @click="searchCollege"
+            @click="_getCollegeList"
             >搜索</el-button
           >
           <el-button
             type="success"
             size="medium"
             icon="el-icon-plus"
-            @click="handleAdd"
+            @click="toAdd"
             >新增</el-button
           >
         </div>
@@ -84,11 +85,15 @@
         ></el-table-column>
         <el-table-column
           width="110"
-          prop="createTime"
-          label="创建时间"
+          prop="updateTime"
+          label="修改时间"
           show-overflow-tooltip
           align="center"
-        ></el-table-column>
+        >
+          <template slot-scope="scope">
+            {{ scope.row.updateTime | emptyStr }}
+          </template>
+        </el-table-column>
         <el-table-column
           prop="describe"
           label="学院描述"
@@ -118,6 +123,9 @@
               fit="contain"
               lazy
             >
+              <div slot="error" class="image-slot">
+                <i class="el-icon-picture-outline"></i>
+              </div>
             </el-image>
           </template>
         </el-table-column>
@@ -141,12 +149,18 @@
               @click="editTable(scope.$index, scope.row)"
               >编辑</el-button
             >
-            <el-button
-              type="danger"
-              @click="toDelete(scope.row)"
-              :disabled="scope.row.state == 0 ? false : true"
-              >删除</el-button
+            <el-popconfirm
+              style="margin-left: 5px"
+              title="确定删除该分类吗？"
+              @confirm="toDelete(scope.row)"
             >
+              <el-button
+                slot="reference"
+                type="danger"
+                :disabled="scope.row.state == 0 ? false : true"
+                >删除</el-button
+              >
+            </el-popconfirm>
           </template>
         </el-table-column>
       </el-table>
@@ -175,19 +189,19 @@
         :rules="rules"
         label-width="110px"
       >
-        <el-form-item label="校区名称：">
+        <el-form-item label="校区名称：" prop="campusId">
           <el-select disabled v-model="formData.campusId">
             <el-option
-              v-for="item in campusList"
-              :key="item.value"
-              :label="'[' + item.value + ']' + item.label"
-              :value="item.value"
+              v-for="item in campusSelectOptions"
+              :key="item.id"
+              :label="'[' + item.id + ']' + item.campusName"
+              :value="item.id"
               disabled
             ></el-option>
           </el-select>
         </el-form-item>
 
-        <el-form-item label="学院名称：">
+        <el-form-item label="学院名称：" prop="collegeName">
           <el-input v-model="formData.collegeName" disabled></el-input>
         </el-form-item>
 
@@ -213,56 +227,176 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="学院描述：">
+        <el-form-item label="学院描述：" prop="describe">
           <el-input
             v-model="formData.describe"
             placeholder="学院描述"
-            style="width: 300px; margin-bottom: 5px"
             clearable
           ></el-input>
         </el-form-item>
 
-        <el-form-item label="学院简介：">
+        <el-form-item label="学院简介：" prop="shortDes">
           <el-input
             v-model="formData.shortDes"
             placeholder="学院简介"
-            style="width: 300px; margin-bottom: 5px"
             clearable
           ></el-input>
         </el-form-item>
 
-        <el-form-item label="学院链接：">
+        <el-form-item label="学院链接：" prop="webUrl">
           <el-input
             v-model="formData.webUrl"
             placeholder="学院链接"
-            style="width: 300px; margin-bottom: 5px"
             clearable
           ></el-input>
         </el-form-item>
 
-        <el-form-item label="图片："> </el-form-item>
+        <el-form-item label="图片：" prop="picUrl">
+          <el-image
+            style="height: 50px; margin-right: 10px"
+            :src="imageUrl"
+            :preview-src-list="[imageUrl]"
+            fit="contain"
+          >
+            <div slot="error" class="image-slot">
+              <i class="el-icon-picture-outline"></i>
+            </div>
+          </el-image>
+          <input
+            type="file"
+            name="avatar"
+            ref="fileType"
+            @change="changeImage($event)"
+          />
+        </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" @click="changeTab('diaForm', editType)"
+          <el-button type="primary" @click="handleUpdate"
             >确认</el-button
           >
           <el-button @click="diaIsShow = false">取消</el-button>
         </el-form-item>
       </el-form>
     </el-dialog>
+
+    <!-- 新增学院 -->
+    <el-dialog
+      title="新增学院信息"
+      width="480px"
+      :visible.sync="addDiaShow"
+      class="diaForm"
+    >
+      <el-form
+        ref="diaForm"
+        :model="formData"
+        :rules="rules"
+        label-width="110px"
+      >
+        <el-form-item label="校区名称：" prop="campusId">
+          <el-select v-model="formData.campusId" disabled>
+            <el-option
+              v-for="item in campusSelectOptions"
+              :key="item.id"
+              :label="'[' + item.id + ']' + item.campusName"
+              :value="item.id"
+            ></el-option>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="学院名称：" prop="collegeName">
+          <el-input v-model="formData.collegeName"></el-input>
+        </el-form-item>
+
+        <el-form-item label="学院类型：" prop="collegeTypeId">
+          <el-select clearable v-model="formData.collegeTypeId">
+            <el-option
+              v-for="item in collegeTypeList"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+              :disabled="item.disabled"
+            >
+            </el-option>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="所属建筑：" prop="buildId">
+          <el-select v-model="formData.buildId">
+            <el-option
+              v-for="item in buildingList"
+              :key="item.buildId"
+              :label="'[' + item.buildId + ']' + item.buildName"
+              :value="item.buildId"
+            ></el-option>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="学院描述：" prop="describe">
+          <el-input
+            v-model="formData.describe"
+            placeholder="学院描述"
+            clearable
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item label="学院简介：" prop="shortDes">
+          <el-input
+            v-model="formData.shortDes"
+            placeholder="学院简介"
+            clearable
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item label="学院链接：" prop="webUrl">
+          <el-input
+            v-model="formData.webUrl"
+            placeholder="学院链接"
+            clearable
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item label="图片：" prop="picUrl">
+          <el-image
+            style="height: 50px; margin-right: 10px"
+            :src="imageUrl"
+            :preview-src-list="[imageUrl]"
+            fit="contain"
+          >
+            <div slot="error" class="image-slot">
+              <i class="el-icon-picture-outline"></i>
+            </div>
+          </el-image>
+          <input
+            type="file"
+            name="avatar"
+            ref="fileType"
+            @change="changeImage($event)"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleAdd">确认</el-button>
+          <el-button @click="addDiaShow = false">取消</el-button>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
+    
   </div>
 </template>
 
 <script>
-import { getCampusList } from "@/api/campusData";
-import { getCollegeList, getCollegeTypeList } from "@/api/collegeData";
+import {
+  getCollegeList,
+  getCollegeTypeList,
+  updateCollegeData,
+  insertCollegeData,
+} from "@/api/collegeData";
 import { getBuildingList } from "@/api/buildingData";
-import { API_URL } from "@/config/index.js";
-import { ElImageViewer } from "element-ui/packages/image/src/image-viewer.vue";
+import { API_URL, ITEM_STATE } from "@/config";
+import { mapGetters } from "vuex";
 
 export default {
-  components: {
-    ElImageViewer,
+  computed: {
+    ...mapGetters(["campusSelectOptions"]),
   },
   data() {
     return {
@@ -272,50 +406,47 @@ export default {
       searchKey: "",
       // 分页相关
       currentPage: 1,
-      pageSize: 10,
+      pageSize: 5,
       total: 0,
-      pageSizes: [10, 20, 30, 40],
+      pageSizes: [5, 10, 20],
 
       diaIsShow: false,
-      formData: {},
       editType: "",
-      options: [
-        { label: "待审核", value: 1 },
-        { label: "配送中", value: 2 },
-        { label: "已完成", value: 0 },
-        { label: "已取消", value: 3 },
-      ],
+
       rowIndex: 0,
+      formData: {},
+      imageUrl: "",
+
       rules: {
-        // order: [{ required: true, message: '请输入订单号', trigger: 'blur' }],
-        time: [
-          {
-            // type: 'datetime',
-            required: true,
-            message: "请输入时间",
-            trigger: "change",
-          },
+        campusId: [
+          { required: true, message: "学院名称不能为空", trigger: "blur" },
         ],
-        address: [{ required: true, message: "请输入地址", trigger: "blur" }],
-        phone: [{ required: true, message: "请输入联系方式", trigger: "blur" }],
-        name: [{ required: true, message: "请输入姓名", trigger: "blur" }],
-        status: [
-          { required: true, message: "请选择订单状态", trigger: "change" },
+        collegeName: [
+          { required: true, message: "学院名称不能为空", trigger: "blur" },
+        ],
+        collegeTypeId: [
+          { required: true, message: "学院类型不能为空", trigger: "blur" },
+        ],
+        buildId: [
+          { required: true, message: "所属建筑不能为空", trigger: "blur" },
         ],
       },
-      campusList: [],
       collegeTypeList: [],
       collegeTypeId: "",
 
       buildingList: [],
+
+      addDiaShow: false,
     };
   },
   created() {
-    this._getCampusList();
+    this._getCollegeList();
+    this._getCollegeTypeList();
   },
   filters: {
-    campusShortNameText(val) {
+    emptyStr(val) {
       if (!val) return "-";
+      return val;
     },
     stateText(val) {
       if (val === undefined) return;
@@ -335,38 +466,19 @@ export default {
     },
   },
   methods: {
-    initTable() {
-      this.currentPage = 1;
-      this.tableData = [];
-    },
     handleSize(val) {
       this.pageSize = val;
-      this._getCollegeList(this.campusId, this.currentPage, this.pageSize);
+      this._getCollegeList();
     },
     handlePage(val) {
       this.currentPage = val;
-      this._getCollegeList(this.campusId, this.currentPage, this.pageSize);
+      this._getCollegeList();
     },
-    _getCampusList() {
-      getCampusList().then((res) => {
-        this.campusList = [];
-        for (let campus of res.data) {
-          this.campusList.push({
-            value: campus.campusId,
-            label: campus.campusName,
-            disabled: campus.campusId == 9,
-          });
-        }
-        this.campusId = 6; // 默认软件园校区
-        this._getCollegeList();
-        this._getCollegeTypeList();
-        this._getBuildingList();
-      });
-    },
+
     _getCollegeTypeList() {
-      this.collegeTypeList = [];
-      getCollegeTypeList(this.campusId)
+      getCollegeTypeList()
         .then((res) => {
+          this.collegeTypeList = [];
           for (let item of res.data) {
             this.collegeTypeList.push({
               value: item.collegeTypeId,
@@ -378,24 +490,8 @@ export default {
           console.log(err);
         });
     },
-    _getCollegeList() {
-      this.initTable();
-      getCollegeList(this.campusId, this.currentPage, this.pageSize)
-        .then((res) => {
-          // this.tableData = res.data;
-          for (let item of res.data) {
-            let tmp = Object.assign({}, item);
-            tmp.picUrl = API_URL + tmp.picUrl;
-            this.tableData.push(tmp);
-          }
-          this.total = res.respPage.totalCount;
-        })
-        .catch((error) => {
-          this.$message.error(error.message);
-        });
-    },
     /**
-     * 查找该校区的建筑列表
+     * 获取当前校区的建筑列表
      */
     _getBuildingList() {
       getBuildingList(this.campusId)
@@ -406,38 +502,11 @@ export default {
           console.log(err);
         });
     },
-    // 查找
-    // searchTab() {
-    //   let arrList = []
-    //   for (let item of this.allList) {
-    //     if (
-    //       this.sch_order.trim() === '' &&
-    //       this.sch_status === null &&
-    //       this.sch_date === null
-    //     ) {
-    //       arrList = this.allList
-    //       break
-    //     } else if (
-    //       item.order.startsWith(this.sch_order) &&
-    //       (this.sch_status !== null ? item.status === this.sch_status : true) &&
-    //       (this.sch_date !== null ? item.time.startsWith(this.sch_date) : true)
-    //     ) {
-    //       let obj = Object.assign({}, item)
-    //       arrList.push(obj)
-    //     }
-    //   }
-    //   this.schArr = arrList
-    //   this.total = arrList.length
-    //   this.currentPage = 1
-    //   this.pageSize = 10
-    //   this.getPageData()
-    // },
     /**
      * 查找
      * by Type or by key
      */
-    searchCollege() {
-      this.initTable();
+    _getCollegeList() {
       getCollegeList(
         this.campusId,
         this.currentPage,
@@ -445,55 +514,80 @@ export default {
         this.collegeTypeId,
         this.searchKey
       ).then((res) => {
+        this.tableData = [];
         for (let item of res.data) {
           let tmp = Object.assign({}, item);
           tmp.picUrl = API_URL + tmp.picUrl;
           this.tableData.push(tmp);
         }
         this.total = res.respPage.totalCount;
+        this._getBuildingList();
       });
     },
-    // add
-    // addTab() {
-    //   this.formData = {};
-    //   this.diaIsShow = true;
-    //   this.formData.order = (Math.random() * 10e18).toString();
-    //   this.formData.id = this.allList.length + 1;
-    //   this.editType = "add";
-    //   this.$nextTick(() => {
-    //     this.$refs.diaForm.clearValidate();
-    //   });
-    // },
     /**
      * 新增学院
      */
-    handleAdd() {},
-    // 审核
-    toConfirm(row) {
-      row.status = 2;
-      this.$notify({
-        title: "成功",
-        message: "审核提交成功",
-        type: "success",
+    toAdd() {
+      this.formData = {};
+      this.formData.campusId = this.campusId || null;
+      this.addDiaShow = true;
+      this.imageUrl = "";
+    },
+    handleAdd() {
+      let form = new FormData();
+      for (let key in this.formData) {
+        form.append(key, this.formData[key]);
+      }
+      form.append("file", this.$refs.fileType.files[0]);
+      form.append("token", "886a");
+
+      insertCollegeData(form).then((res) => {
+        this.$message.success(res.msg);
+        this.addDiaShow = false;
+        this._getCollegeList();
+      }).catch((err) => {
+        console.log(err);
       });
     },
-    // 完成
-    toSuccess(row) {
-      row.status = 0;
-      this.$notify({
-        title: "成功",
-        message: "该订单已完成配送",
-        type: "success",
+    /**
+     * 修改学院信息
+     */
+    handleUpdate() {
+      let form = new FormData();
+      form.append("collegeId", this.formData.collegeId);
+      form.append("collegeTypeId", this.formData.collegeTypeId);
+      form.append("campusId", this.formData.campusId);
+      form.append("buildId", this.formData.buildId);
+      form.append("shortDes", this.formData.shortDes);
+      form.append("webUrl", this.formData.webUrl);
+      form.append("videoUrl", this.formData.videoUrl);
+      form.append("describe", this.formData.describe);
+
+      form.append("file", this.$refs.fileType.files[0]);
+      form.append("token", "886a");
+
+      updateCollegeData(form).then((res) => {
+        this.$message.success(res.msg);
+        this.diaIsShow = false;
+        this._getCollegeList();
+      }).catch((err) => {
+        console.log(err);
       });
     },
-    // 取消
+    // 删除
     toDelete(row) {
-      
-      this.$notify({
-        title: "成功",
-        message: "已删除相关信息",
-        type: "success",
-      });
+      let form = new FormData();
+      form.append("collegeId", row.collegeId);
+      form.append("state", ITEM_STATE.DELETED);
+      form.append("token", "886a");
+      updateCollegeData(form)
+        .then((res) => {
+          this.$message.success(res.msg);
+          this._getCollegeList();
+        })
+        .catch((err) => {
+          this.$message.error(err.message);
+        });
     },
     // 编辑
     editTable(index, row) {
@@ -503,38 +597,21 @@ export default {
       this.$nextTick(() => {
         this.$refs.diaForm.clearValidate();
       });
+      this.imageUrl = this.formData.picUrl;
       this.rowIndex = index;
     },
-    changeTab(form, type) {
-      this.$refs[form].validate((valid) => {
-        if (valid) {
-          if (type === "update") {
-            // 改变整个表格数据
-            let start = (this.currentPage - 1) * this.pageSize;
-            this.allList[start + this.rowIndex] = Object.assign(
-              {},
-              this.formData
-            );
-            // 解决数组不能通过索引响应数据变化
-            this.$set(
-              this.tableData,
-              this.rowIndex,
-              Object.assign({}, this.formData)
-            );
-            this.$notify({
-              title: "成功",
-              message: "订单已修改成功",
-              type: "success",
-            });
-          } else {
-            this.tableData.unshift(Object.assign({}, this.formData));
-            this.allList.push(Object.assign({}, this.formData));
-          }
-          this.diaIsShow = false;
-        } else {
-          return;
-        }
-      });
+
+    changeImage(e) {
+      let file = e.target.files[0];
+      console.log(file);
+      let reader = new FileReader();
+      let that = this;
+      reader.readAsDataURL(file);
+      this.imageUrl = URL.createObjectURL(file);
+      reader.onload = function (e) {
+        //   that.avatar = this.result;
+        //   this.imageUrl = URL.createObjectURL(this.result);
+      };
     },
   },
 };
@@ -588,5 +665,30 @@ export default {
 }
 .el-tooltip__popper {
   max-width: 300px;
+}
+
+/* 图片上传相关 */
+.avatar-uploader .el-upload {
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.avatar-uploader .el-upload:hover {
+  border-color: #409eff;
+}
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 178px;
+  height: 178px;
+  line-height: 178px;
+  text-align: center;
+}
+.avatar {
+  width: 178px;
+  height: 178px;
+  display: block;
 }
 </style>

@@ -17,6 +17,8 @@ Vue.config.productionTip = false;
 
 export const web3dSdk = new Web3dSdkPc();
 web3dSdk.initSdk();
+store.dispatch("data/getCampusSelectOptions");
+// 获取校区的select选框数据
 
 new Vue({
   router,

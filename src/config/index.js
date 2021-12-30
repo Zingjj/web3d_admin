@@ -21,8 +21,14 @@ const MODULE_NAME = {
   9: '使用帮助'
 }
 const API_URL = "http://202.194.14.238:8082";
+
+const ITEM_STATE = {
+  DELETED: 1,
+  NORMAL: 0
+}
 export {
   CAMPUS_NAME_CH,
   MODULE_NAME,
-  API_URL
+  API_URL,
+  ITEM_STATE
 };
